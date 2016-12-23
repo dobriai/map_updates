@@ -1,0 +1,20 @@
+{
+  "name": "map_w_gps_updates",
+  "version": "1.0.0",
+  "description": "Map with updating position markers",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Ivan Dobrianov",
+  "license": "MIT",
+  "repository" :
+  { "type" : "git"
+    , "url" : "https://github.com/weshall/see.git"
+  },
+  "dependencies": {
+    "ejs": "^2.5.5",
+    "express": "^4.14.0",
+    "ws": "^1.1.1"
+  }
+}
