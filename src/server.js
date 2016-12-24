@@ -21,13 +21,9 @@ server.listen(17000);
 // The Websocket part
 var wss = new WebSocketServer({server: server});
 wss.on('connection', function (ws) {
-  // var id = setInterval(function () {
-  //   ws.send(JSON.stringify(process.memoryUsage()), function () { /* ignore errors */ });
-  // }, 5000);
   console.log('New WS connection');
   ws.on('close', function () {
     console.log('Closing WS connection');
-    // clearInterval(id);
   });
 });
 
