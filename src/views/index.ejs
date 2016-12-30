@@ -38,16 +38,23 @@
       center: myLatLng
     });
 
-    var marker = new google.maps.Marker({
-      position: myLatLng,
-      map: map,
-      title: 'Joe Doe',
-      label: 'JD'
-    });
+    var markers = {};
 
     ws.onmessage = function (event) {
-      var lalo = JSON.parse(event.data);
-      marker.setPosition(lalo);
+      var userUpdate = JSON.parse(event.data);
+      var uid = userUpdate['uid'];
+      var laln = (({lat, lng}) => ({lat, lng}))(userUpdate)
+      if (uid in markers) {
+        markers[uid].setPosition(laln);
+      }
+      else {
+        markers[uid] = new google.maps.Marker({
+          position: laln,
+          map: map,
+          title: uid,
+          label: uid.substr(0, 2)
+        });
+      }
     }
   }
   </script>

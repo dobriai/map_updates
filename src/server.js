@@ -7,6 +7,11 @@ var argv = require('minimist')(process.argv.slice(2));
 
 var GOOGLE_API_KEY = process.env.GOOGLE_API_KEY;
 
+var httpPort = 'p' in argv ? argv['p'] : 17000;
+var udpPort  = 'u' in argv ? argv['u'] : 11000;
+
+var userData = {};
+
 // HTTP Server
 app.set('view engine', 'ejs')
 app.get('/', function (req, res) {
@@ -18,7 +23,7 @@ app.get('/', function (req, res) {
 })
 // app.use(express.static(path.join(__dirname, '/public')));
 var httpServer = http.createServer(app);
-httpServer.listen(17000);
+httpServer.listen(httpPort);
 
 // The Websocket part
 var wss = new WebSocketServer({server: httpServer});
@@ -32,6 +37,7 @@ wss.on('connection', function (ws) {
 // UDP server
 const dgram = require('dgram');
 const udpSvr = dgram.createSocket('udp4');
+const msgKeys = ['uid', 'time', 'lat', 'lng'];
 
 udpSvr.on('error', (err) => {
   console.log(`udpSvr error:\n${err.stack}`);
@@ -41,8 +47,19 @@ udpSvr.on('error', (err) => {
 udpSvr.on('message', (msg, rinfo) => {
   console.log(`udpSvr got: ${msg} from ${rinfo.address}:${rinfo.port}`);
   var jIn = JSON.parse(msg);
-  var jOut = { "lat" : jIn[2], "lng" : jIn[3] };
-  var mOut = JSON.stringify(jOut);
+  if (jIn.length != msgKeys.length) {
+    console.log(`*** Input has more or fewer values: ${jIn.length}!`)
+    return;
+  }
+  var userUpdate = {};
+  jIn.forEach((vv, ii) => {
+    userUpdate[msgKeys[ii]] = vv;
+  })
+
+  userData[ userUpdate['uid'] ] = userUpdate;
+  userData[ userUpdate['uid'] ].delete('uid');  // Remove the key from the values
+
+  var mOut = JSON.stringify(userUpdate);
 
   wss.clients.forEach(function each(client) {
     client.send(mOut);
@@ -54,7 +71,7 @@ udpSvr.on('listening', () => {
   console.log(`udpSvr listening ${address.address}:${address.port}`);
 });
 //
-udpSvr.bind(11000);
+udpSvr.bind(udpPort);
 
 // Fake data
 var laloIdx = 0;
@@ -64,7 +81,10 @@ if ('fake' in argv) {
   // Sending (fake) updates to simulate s.o. moving and sending GPS coords
   var updater = setInterval(function () {
     // ws.send(JSON.stringify(process.memoryUsage()), function () { /* ignore errors */ });
-    var msg = JSON.stringify(lalos[laloIdx]);
+    var json = lalos[laloIdx];
+    json['uid'] = 'JoeDoe';
+    json['time'] = Math.floor(Date.now() / 1000);
+    var msg = JSON.stringify(json);
     laloIdx = (laloIdx + 1) % lalos.length;
 
     console.log('Debug: Sending update: ' + msg);
