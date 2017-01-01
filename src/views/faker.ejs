@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+  <meta charset="utf-8">
+  <title>Simple markers</title>
+  <style>
+  /* Always set the map height explicitly to define the size of the div
+  * element that contains the map. */
+  #map {
+    height: 100%;
+  }
+  /* Optional: Makes the sample page fill the window. */
+  html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+  }
+  </style>
+  <script>
+  var host = window.document.location.host.replace(/:.*/, '');
+  var ws = new WebSocket('ws://' + host + ':17000');
+
+  function onDocLoaded() {
+  }
+  </script>
+
+</head>
+<body onload="onDocLoaded()">
+  <div id="map">If you see this, then somerhing is not working!</div>
+  <script>
+
+  function initMap() {
+    var myLatLng = <%- LAT_LNG_0 %>;
+    var uid = "<%= USER_ID %>";
+
+    var map = new google.maps.Map(document.getElementById('map'), {
+      disableDoubleClickZoom: true,
+      zoom: 16,
+      center: myLatLng
+    });
+
+    var marker = new google.maps.Marker({
+      position: myLatLng,
+      map: map,
+      title: uid,
+      label: uid.substr(0, 2)
+    });
+
+    google.maps.event.addListener(map, 'dblclick', (gmEvent) => {
+      marker.setPosition(gmEvent.latLng);
+      // gmEvent.stop();        // Does nothing! (see StackOverflow 17373677)
+      // event.preventDefault();   // ... also does nothing!
+
+      var json = gmEvent.latLng.toJSON();
+      json['uid'] = uid;
+      json['time'] = Math.floor(Date.now() / 1000);
+      var msg = JSON.stringify(json);
+      ws.send(msg);
+    });
+  }
+  </script>
+  <script async defer
+  src="https://maps.googleapis.com/maps/api/js?key=<%= GOOGLE_API_KEY %>&callback=initMap">
+  </script>
+</body>
+</html>

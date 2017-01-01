@@ -42,6 +42,10 @@
 
     ws.onmessage = function (event) {
       var userUpdate = JSON.parse(event.data);
+      updateMarker(userUpdate);
+    }
+
+    function updateMarker(userUpdate) {
       var uid = userUpdate['uid'];
       var laln = (({lat, lng}) => ({lat, lng}))(userUpdate)
       if (uid in markers) {
@@ -56,6 +60,23 @@
         });
       }
     }
+    var httpRequest = new XMLHttpRequest();
+    httpRequest.onreadystatechange = () => {
+      if (httpRequest.readyState === XMLHttpRequest.DONE) {
+        if (httpRequest.status === 200) {
+          var userData = JSON.parse(httpRequest.responseText);
+          Object.keys(userData).forEach((kk) => {
+            var userUpdate = userData[kk];
+            userUpdate['uid'] = kk;   // This adds to the ref, so we modify userUpdate - don't care!
+            updateMarker(userUpdate);
+          });
+        } else {
+          alert('There was a problem with the request.');
+        }
+      }
+    };
+    httpRequest.open('GET', 'fullupdate');
+    httpRequest.send();
   }
   </script>
   <script async defer
